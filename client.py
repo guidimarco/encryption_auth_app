@@ -90,7 +90,7 @@ elif not server_cert.not_valid_before <= NOW <= server_cert.not_valid_after:
     sys.exit()
 elif CHECK_REVOCATION_LIST and not revoked_cert == None:
     print( f"{NEW_LINE}ERROR: Server certificate has been revoked!" )
-    sys.exit( f"{NEW_LINE}ERROR: Server certificate has been revoked!" )
+    sys.exit()
 
 ca_pub_key.verify(
     server_cert.signature,
@@ -141,4 +141,4 @@ padded_plain_text = ctx.update( padded_cipher_text ) + ctx.finalize()
 unpadder = padding.PKCS7( BLOCK_SIZE_BITS ).unpadder()
 plain_text = unpadder.update( padded_plain_text ) + unpadder.finalize()
 
-print( f"{NEW_LINE}Here the message: {plain_text}" )
+print( f"{NEW_LINE}-----{NEW_LINE*2}Here the message: {plain_text}" )

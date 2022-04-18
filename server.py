@@ -45,8 +45,6 @@ plain_text = input( "Write the message to send to the client: " ).encode()
 
 cipher = Cipher( algorithms.AES( AES_KEY ), modes.CBC( AES_IV ), default_backend() )
 
-print( f"{NEW_LINE}{NEW_LINE}{AES_IV}" )
-
 # Add padding
 padder = padding.PKCS7( BLOCK_SIZE_BITS ).padder()
 padded_plain_text = padder.update( plain_text ) + padder.finalize()
