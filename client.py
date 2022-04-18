@@ -24,39 +24,46 @@ import datetime
 # =============================================================================
 
 NEW_LINE = "\r\n"
-CHECK_REVOCATION_LIST = True
+
+CA_CERT = "fake_CA_cert.pem" # invalid CA: wrong_CA_cert.pem
+SERVER_CERT = "fake_server_cert.pem" # invalid server cert: wrong_server_cert.pem
+
+NOW = datetime.datetime.now() # invalid time: datetime.datetime(2030, 5, 17)
+
+CA_CRL = "fake_CA_crl.pem"
+CHECK_REVOCATION_LIST = False # set True if you want to check CA crl
 
 # =============================================================================
 # SCRIPT 1
 # =============================================================================
 
 # Load CA certificate
-fileName = "fake_CA_cert.pem"
-# fileName = "wrong_CA_cert.pem"
-with open( fileName, "rb" ) as f:
+with open( CA_CERT, "rb" ) as f:
     pem_text = f.read()
     ca_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
 
 ca_name = ca_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 ca_pub_key = ca_cert.public_key()
 
+print( f"{NEW_LINE}Loaded CA cert. Name: {ca_name}." )
+
 # Load server certificate
-fileName = "fake_server_cert.pem"
-# fileName = "wrong_server_cert.pem"
-with open( fileName, "rb" ) as f:
+with open( SERVER_CERT, "rb" ) as f:
     pem_text = f.read()
     server_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
 
+server_name = server_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 server_issuer_name = server_cert.issuer.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 server_pub_key = server_cert.public_key()
 
-now = datetime.datetime.now()
-# now = datetime.datetime(2030, 5, 17)
+print( f"{NEW_LINE}Loaded server cert. Name: {server_name}." )
 
 # Load CA crl
-with open( "fake_CA_crl.pem", "rb" ) as f:
+with open( CA_CRL, "rb" ) as f:
     pem_text = f.read()
     ca_crl = x509.load_pem_x509_crl( pem_text, default_backend() )
+
+print( f"{NEW_LINE}Loaded CA crl. There are {len(ca_crl)} revoked cert." )
 
 revoked_cert = ca_crl.get_revoked_certificate_by_serial_number( int(server_cert.serial_number) )
 
@@ -64,7 +71,7 @@ revoked_cert = ca_crl.get_revoked_certificate_by_serial_number( int(server_cert.
 if not server_issuer_name == ca_name:
     print( f"{NEW_LINE}ERROR: Server certificate is not valid!" )
     sys.exit()
-elif not server_cert.not_valid_before <= now <= server_cert.not_valid_after:
+elif not server_cert.not_valid_before <= NOW <= server_cert.not_valid_after:
     print( f"{NEW_LINE}ERROR: Server certificate is expired!" )
     sys.exit()
 elif CHECK_REVOCATION_LIST and not revoked_cert == None:
@@ -77,3 +84,5 @@ ca_pub_key.verify(
     padding.PKCS1v15(),
     hashes.SHA256()
 )
+
+print( f"{NEW_LINE}The certificate of {server_name} is valid!" )
