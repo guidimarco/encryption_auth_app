@@ -1,7 +1,7 @@
 """
     SERVER script:
         1) Get the msg and encrypt with AES-128-CBC
-        2) Load PK and sign the  ( IV + cyphertext )
+        2) Load PK and sign IV + cyphertext
         3) Save the signature in a new file
 
     @author: Marco Guidi
@@ -55,7 +55,7 @@ ciphertext = ctx.update( padded_plain_text ) + ctx.finalize()
 
 msg = AES_IV + ciphertext
 
-print( f"{NEW_LINE}Message encrypted. Message: {plain_text}, cypher text: {ciphertext}." )
+print( f"{NEW_LINE}Message encrypted. Message: {plain_text}, ciphertext: {ciphertext}." )
 
 with open( ENC_FILE, "wb" ) as f:
     f.write( msg )

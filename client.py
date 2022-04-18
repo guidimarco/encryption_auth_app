@@ -3,7 +3,7 @@
         1) Load CA, server cert and CA revocation list
             and verify server cert validity
         2) Verify that the signed-msg is from the server
-        3) Decript message
+        3) Decrypt message
 
     @author: Marco Guidi
 """
@@ -74,8 +74,8 @@ print( f"{NEW_LINE}Loaded server cert. Name: {server_name}." )
 
 # Load CA crl
 with open( CA_CRL, "rb" ) as f:
-    pem_ca_crl = f.read()
-    ca_crl = x509.load_pem_x509_crl( pem_ca_crl, default_backend() )
+    pem_text = f.read()
+    ca_crl = x509.load_pem_x509_crl( pem_text, default_backend() )
 
 print( f"{NEW_LINE}Loaded CA crl. There are {len(ca_crl)} revoked cert." )
 
@@ -107,7 +107,7 @@ print( f"{NEW_LINE}The certificate of {server_name} is valid!" )
 
 with open( ENC_FILE, "rb" ) as f:
     iv = f.read( int( BLOCK_SIZE_BITS / 8 ) )
-    padded_cipher_text = f.read()    
+    padded_cipher_text = f.read()
 
 with open( SIGN_FILE, "rb" ) as f:
     signature = f.read()
@@ -122,7 +122,6 @@ try:
         ),
         hashes.SHA256()
     )
-
     print( f"{NEW_LINE}The message is verified!" )
 except:
     print( f"{NEW_LINE}ERROR: The message is not verified!" )
@@ -141,4 +140,4 @@ padded_plain_text = ctx.update( padded_cipher_text ) + ctx.finalize()
 unpadder = padding.PKCS7( BLOCK_SIZE_BITS ).unpadder()
 plain_text = unpadder.update( padded_plain_text ) + unpadder.finalize()
 
-print( f"{NEW_LINE}-----{NEW_LINE*2}Here the message: {plain_text}" )
+print( f"{NEW_LINE}-----{NEW_LINE*2}Here's the message:{NEW_LINE*2}", plain_text.decode() )
