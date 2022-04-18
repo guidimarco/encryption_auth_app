@@ -52,8 +52,8 @@ BLOCK_SIZE_BITS = algorithms.AES.block_size
 
 # Load CA certificate
 with open( CA_CERT, "rb" ) as f:
-    pem_ca_cert = f.read()
-    ca_cert = x509.load_pem_x509_certificate( pem_ca_cert, default_backend() )
+    pem_text = f.read()
+    ca_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
 
 ca_name = ca_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 ca_pub_key = ca_cert.public_key()
@@ -62,11 +62,12 @@ print( f"{NEW_LINE}Loaded CA cert. Name: {ca_name}." )
 
 # Load server certificate
 with open( SERVER_CERT, "rb" ) as f:
-    pem_server_cert = f.read()
-    server_cert = x509.load_pem_x509_certificate( pem_server_cert, default_backend() )
+    pem_text = f.read()
+    server_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
 
 server_name = server_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 server_issuer_name = server_cert.issuer.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
+
 server_pub_key = server_cert.public_key()
 
 print( f"{NEW_LINE}Loaded server cert. Name: {server_name}." )
@@ -89,7 +90,7 @@ elif not server_cert.not_valid_before <= NOW <= server_cert.not_valid_after:
     sys.exit()
 elif CHECK_REVOCATION_LIST and not revoked_cert == None:
     print( f"{NEW_LINE}ERROR: Server certificate has been revoked!" )
-    sys.exit()
+    sys.exit( f"{NEW_LINE}ERROR: Server certificate has been revoked!" )
 
 ca_pub_key.verify(
     server_cert.signature,
