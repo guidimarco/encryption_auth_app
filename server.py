@@ -12,7 +12,7 @@
 # =============================================================================
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives import padding as padding
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding as padding_asym
@@ -28,7 +28,9 @@ NEW_LINE = "\r\n"
 BLOCK_SIZE_BITS = algorithms.AES.block_size
 
 SERVER_PK = "fake_server_key.pem"
-SIGN_FILE = "message.txt.sign"
+
+ENC_FILE = "msg.enc"
+SIGN_FILE = "msg.sgn"
 
 # =============================================================================
 # SCRIPT 1
@@ -53,22 +55,27 @@ ciphertext = ctx.update( padded_plain_text ) + ctx.finalize()
 
 print( f"{NEW_LINE}Message encrypted. Message: {plain_text}, cypher text: {ciphertext}." )
 
+with open( ENC_FILE, "wb" ) as f:
+    f.write( AES_IV + ciphertext )
+
+print( f"{NEW_LINE}Message encrypted saved. File name: {ENC_FILE}." )
+
 # =============================================================================
 # SCRIPT 2
 # =============================================================================
 
 with open( SERVER_PK, "rb" ) as f:
-    pem_text = f.read()
+    pem_prv_key = f.read()
 
-prvkey = serialization.load_pem_private_key(
-    pem_text,
+server_prv_key = serialization.load_pem_private_key(
+    pem_prv_key,
     None,
     default_backend()
 )
 
 print( f"{NEW_LINE}Loaded server private key." )
 
-signature = prvkey.sign(
+signature = server_prv_key.sign(
     AES_IV + ciphertext,
     padding_asym.PSS(
         mgf=padding_asym.MGF1(hashes.SHA256()),

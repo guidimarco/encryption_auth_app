@@ -2,6 +2,7 @@
     CLIENT script:
         1) Load CA, server cert and CA revocation list
             and verify server cert validity
+        2) Verify that the signed-msg is from the server
 
     @author: Marco Guidi
 """
@@ -33,14 +34,17 @@ NOW = datetime.datetime.now() # invalid time: datetime.datetime(2030, 5, 17)
 CA_CRL = "fake_CA_crl.pem"
 CHECK_REVOCATION_LIST = False # set True if you want to check CA crl
 
+ENC_FILE = "msg.enc"
+SIGN_FILE = "msg.sgn"
+
 # =============================================================================
 # SCRIPT 1
 # =============================================================================
 
 # Load CA certificate
 with open( CA_CERT, "rb" ) as f:
-    pem_text = f.read()
-    ca_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
+    pem_ca_cert = f.read()
+    ca_cert = x509.load_pem_x509_certificate( pem_ca_cert, default_backend() )
 
 ca_name = ca_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 ca_pub_key = ca_cert.public_key()
@@ -49,8 +53,8 @@ print( f"{NEW_LINE}Loaded CA cert. Name: {ca_name}." )
 
 # Load server certificate
 with open( SERVER_CERT, "rb" ) as f:
-    pem_text = f.read()
-    server_cert = x509.load_pem_x509_certificate( pem_text, default_backend() )
+    pem_server_cert = f.read()
+    server_cert = x509.load_pem_x509_certificate( pem_server_cert, default_backend() )
 
 server_name = server_cert.subject.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
 server_issuer_name = server_cert.issuer.get_attributes_for_oid( NameOID.COMMON_NAME )[0].value
@@ -60,8 +64,8 @@ print( f"{NEW_LINE}Loaded server cert. Name: {server_name}." )
 
 # Load CA crl
 with open( CA_CRL, "rb" ) as f:
-    pem_text = f.read()
-    ca_crl = x509.load_pem_x509_crl( pem_text, default_backend() )
+    pem_ca_crl = f.read()
+    ca_crl = x509.load_pem_x509_crl( pem_ca_crl, default_backend() )
 
 print( f"{NEW_LINE}Loaded CA crl. There are {len(ca_crl)} revoked cert." )
 
@@ -86,3 +90,28 @@ ca_pub_key.verify(
 )
 
 print( f"{NEW_LINE}The certificate of {server_name} is valid!" )
+
+# =============================================================================
+# SCRIPT 2
+# =============================================================================
+
+with open( ENC_FILE, "rb" ) as f:
+    enc_msg = f.read()
+
+with open( SIGN_FILE, "rb" ) as f:
+    signature = f.read()
+
+try:
+    server_pub_key.verify(
+        signature,
+        enc_msg,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
+
+    print( f"{NEW_LINE}The message is verified!" )
+except:
+    print( f"{NEW_LINE}ERROR: The message is not verified!" )
