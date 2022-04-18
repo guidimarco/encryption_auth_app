@@ -29,7 +29,7 @@ BLOCK_SIZE_BITS = algorithms.AES.block_size
 
 SERVER_PK = "fake_server_key.pem"
 
-ENC_FILE = "msg.enc"
+ENC_FILE = "msg.txt"
 SIGN_FILE = "msg.sgn"
 
 # =============================================================================
@@ -45,6 +45,8 @@ plain_text = input( "Write the message to send to the client: " ).encode()
 
 cipher = Cipher( algorithms.AES( AES_KEY ), modes.CBC( AES_IV ), default_backend() )
 
+print( f"{NEW_LINE}{NEW_LINE}{AES_IV}" )
+
 # Add padding
 padder = padding.PKCS7( BLOCK_SIZE_BITS ).padder()
 padded_plain_text = padder.update( plain_text ) + padder.finalize()
@@ -53,10 +55,12 @@ padded_plain_text = padder.update( plain_text ) + padder.finalize()
 ctx = cipher.encryptor()
 ciphertext = ctx.update( padded_plain_text ) + ctx.finalize()
 
+msg = AES_IV + ciphertext
+
 print( f"{NEW_LINE}Message encrypted. Message: {plain_text}, cypher text: {ciphertext}." )
 
 with open( ENC_FILE, "wb" ) as f:
-    f.write( AES_IV + ciphertext )
+    f.write( msg )
 
 print( f"{NEW_LINE}Message encrypted saved. File name: {ENC_FILE}." )
 
@@ -76,7 +80,7 @@ server_prv_key = serialization.load_pem_private_key(
 print( f"{NEW_LINE}Loaded server private key." )
 
 signature = server_prv_key.sign(
-    AES_IV + ciphertext,
+    msg,
     padding_asym.PSS(
         mgf=padding_asym.MGF1(hashes.SHA256()),
         salt_length=padding_asym.PSS.MAX_LENGTH
